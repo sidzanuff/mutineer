@@ -15,6 +15,7 @@ var d bool
 
 func main() {
 	QUESTION_PROMPT := string([]byte{58, 32})
+	MENU_PROMPT := "Main Menu] > "
 	FILES_PROMPT := string([]byte{47, 27, 91, 51, 55, 59, 49, 109, 62, 32, 27, 91, 51, 55, 109})
 	EDIT_PROMPT := string([]byte{32, 109, 101, 33, 13, 10, 13, 10, 13, 10, 27, 91, 51, 50, 59, 49, 109})
 
@@ -31,21 +32,21 @@ func main() {
 	c = conn
 	defer conn.Close()
 
-	wait("press backspace/delete: ")
+	wait(QUESTION_PROMPT)
 	write("\b")
-	wait("oes your terminal support ANSI color? (Y)es, (N)o or don't know: ")
+	wait(QUESTION_PROMPT)
 	write("n\n")
-	wait("who are you?: ")
+	wait(QUESTION_PROMPT)
 	send(user)
-	wait("password: ")
+	wait(QUESTION_PROMPT)
 	send(pass)
 	wait("Continue > ")
 	write("\n")
 
-	wait("Main Menu] > ")
+	wait(MENU_PROMPT)
 	write("t")
 	wait(FILES_PROMPT)
-	send("cd users/hexen")
+	send("cd users/" + user)
 	wait(FILES_PROMPT)
 	send("edit " + name)
 	wait(EDIT_PROMPT, "loaded\r\n")
@@ -67,9 +68,9 @@ func main() {
 	wait(FILES_PROMPT)
 	send("quit")
 
-	wait("Main Menu] > ")
+	wait(MENU_PROMPT)
 	write("o")
-	wait("Logoff? (Y)es, (W)ith Message, (N)o: ")
+	wait(QUESTION_PROMPT)
 	write("y")
 }
 
