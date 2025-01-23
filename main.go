@@ -10,8 +10,8 @@ import (
 	"github.com/namsral/flag"
 )
 
-var c net.Conn
-var d bool
+var conn net.Conn
+var debug bool
 
 func main() {
 	QUESTION_PROMPT := string([]byte{58, 32})
@@ -19,17 +19,16 @@ func main() {
 	FILES_PROMPT := string([]byte{47, 27, 91, 51, 55, 59, 49, 109, 62, 32, 27, 91, 51, 55, 109})
 	EDIT_PROMPT := string([]byte{32, 109, 101, 33, 13, 10, 13, 10, 13, 10, 27, 91, 51, 50, 59, 49, 109})
 
-	var user, pass, path, name, desc string
+	var user, pass, src, dst, desc string
 	flag.StringVar(&user, "user", "", "")
 	flag.StringVar(&pass, "pass", "", "")
-	flag.StringVar(&path, "src", "", "")
-	flag.StringVar(&name, "dst", "upload.bas", "")
+	flag.StringVar(&src, "src", "", "")
+	flag.StringVar(&dst, "dst", "upload.bas", "")
 	flag.StringVar(&desc, "desc", "", "")
-	flag.BoolVar(&d, "debug", false, "")
+	flag.BoolVar(&debug, "debug", false, "")
 	flag.Parse()
 
-	conn, _ := net.Dial("tcp", "mutinybbs.com:2300")
-	c = conn
+	conn, _ = net.Dial("tcp", "mutinybbs.com:2300")
 	defer conn.Close()
 
 	wait(QUESTION_PROMPT)
@@ -48,11 +47,11 @@ func main() {
 	wait(FILES_PROMPT)
 	send("cd users/" + user)
 	wait(FILES_PROMPT)
-	send("edit " + name)
+	send("edit " + dst)
 	wait(EDIT_PROMPT, "loaded\r\n")
 	sendwait("new")
 
-	file, _ := os.Open(path)
+	file, _ := os.Open(src)
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
@@ -74,49 +73,49 @@ func main() {
 	write("y")
 }
 
-func wait(s ...string) {
-	if d {
-		fmt.Print(("Waiting for: "))
-		for _, p := range s {
-			chars(p)
+func wait(prompts ...string) {
+	if debug {
+		fmt.Print("Waiting for: ")
+		for _, prompt := range prompts {
+			chars(prompt)
 		}
 	}
 	buf := make([]byte, 256)
 	for {
-		n, _ := c.Read(buf)
+		n, _ := conn.Read(buf)
 		if n == 0 {
 			break
 		}
-		l := string(buf[:n])
-		fmt.Println(l)
-		if d {
+		line := string(buf[:n])
+		fmt.Println(line)
+		if debug {
 			fmt.Print("Got: ")
-			chars(l)
+			chars(line)
 		}
-		for _, p := range s {
-			if strings.HasSuffix(l, p) {
+		for _, prompt := range prompts {
+			if strings.HasSuffix(line, prompt) {
 				return
 			}
 		}
 	}
 }
 
-func write(s string) {
-	c.Write([]byte(s))
+func write(text string) {
+	conn.Write([]byte(text))
 }
 
-func send(s string) {
-	write(s + "\r\n")
+func send(text string) {
+	write(text + "\r\n")
 }
 
-func sendwait(s string) {
-	s = s + "\r\n"
-	write(s)
-	wait(s)
+func sendwait(text string) {
+	text = text + "\r\n"
+	write(text)
+	wait(text)
 }
 
-func chars(s string) {
-	for _, c := range s {
+func chars(text string) {
+	for _, c := range text {
 		fmt.Printf("%d,", c)
 	}
 	fmt.Println()
